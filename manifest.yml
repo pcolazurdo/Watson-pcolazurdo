@@ -1,0 +1,7 @@
+applications:
+- services:
+  - "Language Identification-wu" 
+  name: Watson-pcolazurdo 
+  command: node app.js
+  path: .
+  memory: 128M
