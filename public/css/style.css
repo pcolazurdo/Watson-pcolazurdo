@@ -1,6 +1,18 @@
 /* style.css
  * This file provides css styles.
  */
+
+
+h2 {
+  color: #BA006E !important;
+  background-color: white !important;
+  font-weight: 200;
+}
+
+.header {
+  background-color: white !important;
+}
+
 .ORGANIZATION {
 background-color: #BA006E; /* IBM's PINK3 */
 color: white;

@@ -38,7 +38,7 @@ if (process.env.VCAP_SERVICES) {
   var services = JSON.parse(process.env.VCAP_SERVICES);
   //service name, check the VCAP_SERVICES in bluemix to get the name of the services you have
   var service_name = 'language_identification';
-  
+
   if (services[service_name]) {
     var svc = services[service_name][0].credentials;
     service_url = svc.url;
@@ -66,13 +66,13 @@ app.get('/', function(req, res){
 
 // Handle the form POST containing the text to identify with Watson and reply with the language
 app.post('/', function(req, res){
-  
+
   var request_data = {
-    'txt': req.body.txt, 
+    'txt': req.body.txt,
     'sid': 'lid-generic',  // service type : language identification (lid)
     'rt':'json' // return type e.g. json, text or xml
   };
-  
+
   var parts = url.parse(service_url); //service address
 
   // create the request options to POST our question to Watson
@@ -94,7 +94,7 @@ app.post('/', function(req, res){
     result.on("data", function(chunk) {
       responseString += chunk;
     });
-    
+
     result.on('end', function() {
       var lang = JSON.parse(responseString).lang;
       return res.render('index',{ 'txt': req.body.txt, 'lang': lang });
