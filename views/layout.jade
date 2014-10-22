@@ -22,10 +22,15 @@ html(lang="en")
           img(src="/images/app.png")
         div.col-lg-8
           h2 Not sure what you're friends are talking about?
-          p Try at least to identify what language are they using.
-            | Based on this <a href='http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/lidapi/'> sample concept </a>
+          p Try at least to identify what language they are using.
+            | Based on this <a href='http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/doc/lidapi/'> IBM provided sample concept </a>
       block row-content
-      div.footer.row
-        div.col-lg-8
-          p Follow me
+
+      #footer
+            .container
+                p(class="text-muted credit")
+                    | follow me at <a href="http://twitter.com/pcolazurdo"> @pcolazurdo </a>
+
+    script(src="/js/jquery.js")
+    script(src="/js/bootstrap.min.js")
     script(type='text/javascript', src="/js/css_browser_selector.js")
