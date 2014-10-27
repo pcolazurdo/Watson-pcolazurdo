@@ -10,6 +10,7 @@ var https = require('https');
 var url = require('url');
 var querystring = require('querystring');
 
+
 // setup middleware
 var app = express();
 app.use(express.errorHandler());
@@ -57,6 +58,63 @@ console.log('service_username = ' + service_username);
 console.log('service_password = ' + new Array(service_password.length).join("X"));
 
 var auth = 'Basic ' + new Buffer(service_username + ':' + service_password).toString('base64');
+
+// manage API Rest
+app.get( '/api', function( request, response ) {
+    var resp = [
+            {
+                Application: "watson-pcolazurdo",
+                ServiceUrl: service_url,
+                Status: "Ok"
+            }
+        ];
+
+    response.send(resp);
+});
+
+app.get( '/api/lid/:text', function( request, response) {
+  var request_data = {
+    'txt': request.params.text,
+    'sid': 'lid-generic',  // service type : language identification (lid)
+    'rt':'json' // return type e.g. json, text or xml
+  };
+
+  var parts = url.parse(service_url); //service address
+
+  // create the request options to POST our question to Watson
+  var options = { host: parts.hostname,
+    port: parts.port,
+    path: parts.pathname,
+    method: 'POST',
+    headers: {
+      'Content-Type'  :'application/x-www-form-urlencoded', // only content type supported
+      'X-synctimeout' : '30',
+      'Authorization' :  auth }
+  };
+
+  // Create a request to POST to the Watson service
+  var watson_req = https.request(options, function(result) {
+    result.setEncoding('utf-8');
+    var responseString = '';
+
+    result.on("data", function(chunk) {
+      responseString += chunk;
+    });
+
+    result.on('end', function() {
+      var lang = JSON.parse(responseString).lang;
+      return response.send({ 'txt': req.request.params.text, 'lang': lang });
+    })
+
+  });
+
+  // create the request to Watson
+  watson_req.write(querystring.stringify(request_data));
+  watson_req.end();
+
+});
+
+
 
 // render index page
 app.get('/', function(req, res){
