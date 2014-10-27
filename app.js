@@ -150,16 +150,36 @@ app.get( '/api/lid/:text', function( request, response) {
     });
 
     result.on('end', function() {
-      var lang = JSON.parse(responseString).lang;
-      return response.send({ 'txt': req.request.params.text, 'lang': lang });
+      try {
+        var lang = JSON.parse(responseString).lang;
+        return response.send({ 'txt': req.request.params.text, 'lang': lang });
+      }
+      catch (e) {
+        console.log("Catched Fire on result.on (end)")
+        console.log(e);
+      }
+
     })
 
   });
 
   console.log(querystring.stringify(request_data));
   // create the request to Watson
-  watson_req.write(querystring.stringify(request_data));
-  watson_req.end();
+  try {
+    watson_req.write(querystring.stringify(request_data));
+    console.log ("watson_req.write succeded");
+  }
+  catch (e) {
+    console.log("Catched Fire on watson_req.write")
+    console.log(e);
+  }
+  try {
+    watson_req.end();
+  }
+  catch (e) {
+    console.log("Catched Fire on watson_req.end")
+    console.log(e);
+  }
 
 });
 
