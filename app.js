@@ -9,7 +9,17 @@ var express = require('express');
 var https = require('https');
 var url = require('url');
 var querystring = require('querystring');
+var log4js = require('log4js');
 
+log4js.loadAppender('file');
+log4js.addAppender(log4js.appenders.file('output.log',null,10000000000));
+
+// the important part ;)
+log4js.replaceConsole()
+//
+
+var logger = log4js.getLogger();
+console.log("App Started: " + Date().toString());
 
 // setup middleware
 var app = express();
@@ -51,6 +61,7 @@ if (process.env.VCAP_SERVICES) {
 
 } else {
   console.log('No VCAP_SERVICES found in ENV, using defaults for local development');
+  service_url = "http://locahost:3000/api/log/"
 }
 
 console.log('service_url = ' + service_url);
@@ -68,16 +79,51 @@ app.get( '/api', function( request, response ) {
                 Status: "Ok"
             }
         ];
+    console.log("GET /api");
 
     response.send(resp);
 });
 
+app.get( '/api/log/:text', function( request, response ) {
+    console.log("GET /api/log/*");
+    var resp = [
+            {
+                Application: "watson-pcolazurdo",
+                ServiceUrl: service_url,
+                Status: "Ok",
+                Log: request.params.text
+            }
+        ];
+
+    response.send(resp);
+});
+
+app.post( '/api/log/:text', function( request, response ) {
+    console.log("POST /api/log/*");
+    var resp = [
+            {
+                Application: "watson-pcolazurdo",
+                ServiceUrl: service_url,
+                Status: "Ok",
+                Log: request.params.text
+            }
+        ];
+
+    response.send(resp);
+});
+
+
+
+
 app.get( '/api/lid/:text', function( request, response) {
+  console.log("get /api/lid/*");
+  console.log("Request.params.text: " + request.params.text);
   var request_data = {
     'txt': request.params.text,
     'sid': 'lid-generic',  // service type : language identification (lid)
     'rt':'json' // return type e.g. json, text or xml
   };
+  console.log(request_data);
 
   var parts = url.parse(service_url); //service address
 
@@ -91,6 +137,8 @@ app.get( '/api/lid/:text', function( request, response) {
       'X-synctimeout' : '30',
       'Authorization' :  auth }
   };
+
+  console.log(options);
 
   // Create a request to POST to the Watson service
   var watson_req = https.request(options, function(result) {
@@ -108,6 +156,7 @@ app.get( '/api/lid/:text', function( request, response) {
 
   });
 
+  console.log(querystring.stringify(request_data));
   // create the request to Watson
   watson_req.write(querystring.stringify(request_data));
   watson_req.end();
@@ -118,13 +167,14 @@ app.get( '/api/lid/:text', function( request, response) {
 
 // render index page
 app.get('/', function(req, res){
+    console.log("GET /");
     res.render('index');
 });
 
 
 // Handle the form POST containing the text to identify with Watson and reply with the language
 app.post('/', function(req, res){
-
+  console.log("POST /");
   var request_data = {
     'txt': req.body.txt,
     'sid': 'lid-generic',  // service type : language identification (lid)
