@@ -52,27 +52,43 @@ if (process.env.VCAP_SERVICES) {
   console.log('Parsing VCAP_SERVICES');
   var services = JSON.parse(process.env.VCAP_SERVICES);
   //service name, check the VCAP_SERVICES in bluemix to get the name of the services you have
-  var service_name = 'language_identification';
 
-  if (services[service_name]) {
-    var svc = services[service_name][0].credentials;
-    service_url = svc.url;
-    service_username = svc.username;
-    service_password = svc.password;
-  } else {
-    console.log('The service '+service_name+' is not in the VCAP_SERVICES, did you forget to bind it?');
+  try {
+    var service_name = 'language_identification';
+    if (services[service_name]) {
+      var svc = services[service_name][0].credentials;
+      service_url = svc.url;
+      service_username = svc.username;
+      service_password = svc.password;
+    } else {
+      console.log('The service '+service_name+' is not in the VCAP_SERVICES, did you forget to bind it?');
+    }
+  }
+  catch (e){
+    setTimeout(function() {
+        console.log("Catched Fire on getting services")
+        console.log(e);
+    }, 3000);
   }
 
-  var re_service_name = 'relationship_extraction';
-
-  if (services[re_service_name]) {
-    var re_svc = services[re_service_name][0].credentials;
-    re_service_url = re_svc.url;
-    re_service_username = re_svc.username;
-    re_service_password = re_svc.password;
-  } else {
-    console.log('The service '+re_service_name+' is not in the VCAP_SERVICES, did you forget to bind it?');
+  try {
+    var re_service_name = 'relationship_extraction';
+    if (services[re_service_name]) {
+      var re_svc = services[re_service_name][0].credentials;
+      re_service_url = re_svc.url;
+      re_service_username = re_svc.username;
+      re_service_password = re_svc.password;
+    } else {
+      console.log('The service '+re_service_name+' is not in the VCAP_SERVICES, did you forget to bind it?');
+    }
   }
+  catch (e){
+    setTimeout(function() {
+        console.log("Catched Fire on getting services")
+        console.log(e);
+    }, 3000);
+  }
+
 
 } else {
   console.log('No VCAP_SERVICES found in ENV, using defaults for local development');
