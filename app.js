@@ -10,6 +10,7 @@ var https = require('https');
 var url = require('url');
 var querystring = require('querystring');
 var log4js = require('log4js');
+var xmlescape = require('xml-escape');
 
 log4js.loadAppender('file');
 log4js.addAppender(log4js.appenders.file('output.log',null,10000000000));
@@ -40,6 +41,9 @@ var appInfo = JSON.parse(process.env.VCAP_APPLICATION || "{}");
 var service_url = '<service_url>';
 var service_username = '<service_username>';
 var service_password = '<service_password>';
+var re_service_url = '<service_url>';
+var re_service_username = '<service_username>';
+var re_service_password = '<service_password>';
 
 // VCAP_SERVICES contains all the credentials of services bound to
 // this application. For details of its content, please refer to
@@ -59,6 +63,17 @@ if (process.env.VCAP_SERVICES) {
     console.log('The service '+service_name+' is not in the VCAP_SERVICES, did you forget to bind it?');
   }
 
+  var re_service_name = 'relationship_extraction';
+
+  if (services[re_service_name]) {
+    var re_svc = services[re_service_name][0].credentials;
+    re_service_url = re_svc.url;
+    re_service_username = re_svc.username;
+    re_service_password = re_svc.password;
+  } else {
+    console.log('The service '+re_service_name+' is not in the VCAP_SERVICES, did you forget to bind it?');
+  }
+
 } else {
   console.log('No VCAP_SERVICES found in ENV, using defaults for local development');
   service_url = "http://locahost:3000/api/log/"
@@ -67,10 +82,16 @@ if (process.env.VCAP_SERVICES) {
 console.log('service_url = ' + service_url);
 console.log('service_username = ' + service_username);
 console.log('service_password = ' + new Array(service_password.length).join("X"));
+console.log('re_service_url = ' + re_service_url);
+console.log('re_service_username = ' + re_service_username);
+console.log('re_service_password = ' + new Array(re_service_password.length).join("X"));
 
 var auth = 'Basic ' + new Buffer(service_username + ':' + service_password).toString('base64');
+var re_auth = 'Basic ' + new Buffer(re_service_username + ':' + re_service_password).toString('base64');
 
-// manage API Rest
+//
+// API REST
+//
 app.get( '/api', function( request, response ) {
     var resp = [
             {
@@ -112,18 +133,12 @@ app.post( '/api/log/:text', function( request, response ) {
     response.send(resp);
 });
 
-
-
-
 app.get( '/api/lid/:text', function( request, response) {
-  console.log("get /api/lid/*");
-  console.log("Request.params.text: " + request.params.text);
   var request_data = {
     'txt': request.params.text,
     'sid': 'lid-generic',  // service type : language identification (lid)
     'rt':'json' // return type e.g. json, text or xml
   };
-  console.log(request_data);
 
   var parts = url.parse(service_url); //service address
 
@@ -137,8 +152,6 @@ app.get( '/api/lid/:text', function( request, response) {
       'X-synctimeout' : '30',
       'Authorization' :  auth }
   };
-
-  console.log(options);
 
   // Create a request to POST to the Watson service
   var watson_req = https.request(options, function(result) {
@@ -163,26 +176,27 @@ app.get( '/api/lid/:text', function( request, response) {
 
   });
 
-  console.log(querystring.stringify(request_data));
   // create the request to Watson
   try {
     watson_req.write(querystring.stringify(request_data));
-    console.log ("watson_req.write succeded");
+    watson_req.end();
   }
   catch (e) {
     console.log("Catched Fire on watson_req.write")
     console.log(e);
   }
-  try {
-    watson_req.end();
-  }
-  catch (e) {
-    console.log("Catched Fire on watson_req.end")
-    console.log(e);
-  }
+});
+
+
+app.get( '/api/re/:text', function( request, response) {
 
 });
 
+
+
+//
+// PAGES
+//
 
 
 // render index page
@@ -240,6 +254,74 @@ app.post('/', function(req, res){
 
 });
 
+
+app.get('/re', function(req, res){
+    res.render('re_index');
+});
+
+// Handle the form POST containing the text to identify with Watson and reply with the language
+app.post('/re', function(req, res){
+  try {
+    var parts = url.parse(re_service_url);
+
+    // create the request options from our form to POST to Watson
+    var options = {
+      host: parts.hostname,
+      port: parts.port,
+      path: parts.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type'  :'application/x-www-form-urlencoded',
+        'X-synctimeout' : '30',
+        'Authorization' :  auth }
+    };
+  }
+  catch (e){
+    console.log("Error: " + e);
+    //res.render('error', {'error': e.message});
+  }
+
+  // Create a request to POST to Watson
+  try{
+    var watson_req = https.request(options, function(result) {
+      result.setEncoding('utf-8');
+      var resp_string = '';
+
+      result.on("data", function(chunk) {
+        resp_string += chunk;
+      });
+
+      result.on('end', function() {
+        try{
+          return res.render('re_index',{'xml':xmlescape(resp_string), 'text':req.body.txt})
+        }
+        catch (e){
+          console.log("Error: " + e);
+          //res.render('error', {'error': e.message});
+        }
+      })
+    });
+  }
+  catch (e){
+    console.log("Error: " + e);
+    //res.render('error', {'error': e.message});
+  }
+
+  watson_req.on('error', function(e) {
+    return res.render('re_index', {'error':e.message})
+  });
+
+  // Wire the form data to the service
+  console.log("Query String on RE:" + querystring.stringify(req.body));
+  try{
+    watson_req.write(querystring.stringify(req.body));
+    watson_req.end();
+  }
+  catch (e){
+    console.log("Error: " + e);
+    //res.render('error', {'error': e.message});
+  }
+});
 
 // The IP address of the Cloud Foundry DEA (Droplet Execution Agent) that hosts this application:
 var host = (process.env.VCAP_APP_HOST || 'localhost');

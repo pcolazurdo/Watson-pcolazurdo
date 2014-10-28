@@ -1,6 +1,7 @@
 applications:
 - services:
-  - "Language Identification-bk" 
+  - "Language Identification-bk"
+  - "Relationship Extraction-5e"
   name: pcolaz01
   command: node app.js
   path: .

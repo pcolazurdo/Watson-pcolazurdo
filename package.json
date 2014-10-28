@@ -5,7 +5,8 @@
   "dependencies": {
     "express": "3.4.7",
     "jade": "1.1.4",
-    "log4js": "^0.6.21"
+    "log4js": "^0.6.21",
+    "xml-escape": "^1.0.0"
   },
   "engines": {
     "node": "0.10.26"
