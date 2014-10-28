@@ -20,6 +20,17 @@ log4js.replaceConsole()
 //
 
 var logger = log4js.getLogger();
+
+//Capture all Unhandled Errors - seems not recommended in production but for time being it is useful
+process.on('uncaughtException', function(err) {
+      setTimeout(function() {
+      console.log("Catched Fire on getting services")
+      console.log(err);},3000);
+      
+  });
+
+
+
 console.log("App Started: " + Date().toString());
 
 // setup middleware
