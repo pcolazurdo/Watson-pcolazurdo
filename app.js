@@ -152,7 +152,7 @@ app.get( '/api/lid/:text', function( request, response) {
     result.on('end', function() {
       try {
         var lang = JSON.parse(responseString).lang;
-        return response.send({ 'txt': request.request.params.text, 'lang': lang });
+        return response.send({ 'txt': request.params.text, 'lang': lang });
       }
       catch (e) {
         console.log("Catched Fire on result.on (end)")
