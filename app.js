@@ -11,6 +11,9 @@ var url = require('url');
 var querystring = require('querystring');
 var log4js = require('log4js');
 var xmlescape = require('xml-escape');
+var util = require('util');
+var twitter = require('twitter');
+var pouchdb = require('pouchdb');
 
 log4js.loadAppender('file');
 log4js.addAppender(log4js.appenders.file('output.log',null,10000000000));
@@ -23,10 +26,9 @@ var logger = log4js.getLogger();
 
 //Capture all Unhandled Errors - seems not recommended in production but for time being it is useful
 process.on('uncaughtException', function(err) {
-      setTimeout(function() {
-      console.log("Catched Fire on getting services")
-      console.log(err);},3000);
-      
+    setTimeout(function() {
+    console.log("Catched Fire on getting services")
+    console.log(err);},3000);
   });
 
 
@@ -55,6 +57,7 @@ var service_password = '<service_password>';
 var re_service_url = '<service_url>';
 var re_service_username = '<service_username>';
 var re_service_password = '<service_password>';
+var cloudant = '<cloudant credentials>';
 
 // VCAP_SERVICES contains all the credentials of services bound to
 // this application. For details of its content, please refer to
@@ -63,6 +66,7 @@ if (process.env.VCAP_SERVICES) {
   console.log('Parsing VCAP_SERVICES');
   var services = JSON.parse(process.env.VCAP_SERVICES);
   //service name, check the VCAP_SERVICES in bluemix to get the name of the services you have
+  var cloudant = services['cloudantNoSQLDB'][0]['credentials'];
 
   try {
     var service_name = 'language_identification';
@@ -112,9 +116,28 @@ console.log('service_password = ' + new Array(service_password.length).join("X")
 console.log('re_service_url = ' + re_service_url);
 console.log('re_service_username = ' + re_service_username);
 console.log('re_service_password = ' + new Array(re_service_password.length).join("X"));
+console.log('cloudant = ' + cloudant);
 
 var auth = 'Basic ' + new Buffer(service_username + ':' + service_password).toString('base64');
 var re_auth = 'Basic ' + new Buffer(re_service_username + ':' + re_service_password).toString('base64');
+
+var configTwitter = require('./twitter-cred.json');
+var twit = new twitter(configTwitter);
+
+twit.stream('user', {track:'pcolazurdo'}, function(stream) {
+    //stream.on('data', function(data) {
+    //    console.log(util.inspect(data));
+    //});
+    stream.on('favorite', function(data) {
+        console.log(data.target_object.text);
+        db.put(data, data.target_object.id_str, function (err, response) {
+            console.log(err || response);
+          });
+
+    });
+    // Disconnect stream after five seconds
+    //setTimeout(stream.destroy, 5000);
+});
 
 //
 // API REST

@@ -6,7 +6,8 @@
     "express": "3.4.7",
     "jade": "1.1.4",
     "log4js": "^0.6.21",
-    "xml-escape": "^1.0.0"
+    "xml-escape": "^1.0.0",
+    "twitter": "^0.2.12"    
   },
   "engines": {
     "node": "0.10.26"
